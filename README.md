@@ -171,3 +171,80 @@ web        1/1     Running   0          35m
 ```
 
 Выполнены все задания в домашней работе 1.
+
+
+# Домашняя работа 2. Kubernetes controllers. ReplicaSet, Deployment, DaemonSet
+
+Работа проводилась в установленном кластере с помощью RKE v1. Всего 6 нод в кластере, 3 master ноды и 3 worker ноды.
+
+По запуску frontend-replicaset.yaml был не добавлены опции selector
+
+```
+selector:
+    matchLabels:
+      app: frontend
+```
+
+Руководствуясь материалами лекции опишите произошедшую ситуацию, почему обновление ReplicaSet не повлекло обновление запущенных pod?
+
+ReplicaSet не удаляет существующие pod.
+
+Выдержка из документации
+"To update Pods to a new spec in a controlled way, use a Deployment, as ReplicaSets do not support a rolling update directly."
+
+Найдите способ модернизировать свой DaemonSet таким образом, чтобы Node Exporter был развернут как на master, так и на worker нодах (конфигурацию самих нод изменять нельзя);
+
+В мастер нодах, есть такие tains:
+
+```
+root@knd-test-kub-m1:~/elcovstas_platform/kubernetes-controllers# kubectl get nodes -o json | jq '.items[].spec.taints'
+[
+  {
+    "effect": "NoSchedule",
+    "key": "node-role.kubernetes.io/controlplane",
+    "value": "true"
+  },
+  {
+    "effect": "NoExecute",
+    "key": "node-role.kubernetes.io/etcd",
+    "value": "true"
+  }
+]
+[
+  {
+    "effect": "NoSchedule",
+    "key": "node-role.kubernetes.io/controlplane",
+    "value": "true"
+  },
+  {
+    "effect": "NoExecute",
+    "key": "node-role.kubernetes.io/etcd",
+    "value": "true"
+  }
+]
+[
+  {
+    "effect": "NoSchedule",
+    "key": "node-role.kubernetes.io/controlplane",
+    "value": "true"
+  },
+  {
+    "effect": "NoExecute",
+    "key": "node-role.kubernetes.io/etcd",
+    "value": "true"
+  }
+]
+
+```
+
+В манифесте можно использовать tolerations.
+
+Запись tolerations в Kubernetes (k8s) описывает толерантность пода к определенным условиям планирования. Он позволяет запускать поды на узлах с установленными точными толерансами, даже если эти узлы находятся в условиях, отказывающих планировщику размещать на них поды.
+
+В данном случае, запись tolerations задает два условия толерантности для пода:
+
+1. effect: NoSchedule и operator: Exists указывают, что под будет толерантен к состоянию узла с запретом на размещение новых подов (NoSchedule). Это позволит планировщику Kubernetes размещать этот под на узле, даже если на этом узле установлено условие NoSchedule.
+
+2. effect: NoExecute и operator: Exists указывают, что под будет толерантен к состоянию узла с запретом на исполнение старых или нежелательных подов (NoExecute). Это позволит Kubernetes оставлять этот под на узле, даже если этот узел имеет состояние NoExecute.
+
+Такие записи tolerations полезны, когда вы хотите запустить поды на узлах, которые находятся во временных состояниях запрета размещения или исполнения, например, из-за отказа ноды или планового обслуживания.
