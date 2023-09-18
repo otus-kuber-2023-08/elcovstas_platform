@@ -2,10 +2,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: web
-  namespace: canary 
+  namespace: canary
   labels:
-    app: web   
-
+    app: web
 spec:
   replicas: 3
   strategy:
@@ -30,7 +29,7 @@ spec:
             port: 8000
         livenessProbe:
           tcpSocket:
-            port: 8000  
+            port: 8000
         volumeMounts:
           - name: app
             mountPath: "/app"
@@ -43,4 +42,4 @@ spec:
             mountPath: "/app"
       volumes:
         - name: app
-          emptyDir: {}       
+          emptyDir: {}
