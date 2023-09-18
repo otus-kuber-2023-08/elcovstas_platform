@@ -248,3 +248,72 @@ root@knd-test-kub-m1:~/elcovstas_platform/kubernetes-controllers# kubectl get no
 2. effect: NoExecute и operator: Exists указывают, что под будет толерантен к состоянию узла с запретом на исполнение старых или нежелательных подов (NoExecute). Это позволит Kubernetes оставлять этот под на узле, даже если этот узел имеет состояние NoExecute.
 
 Такие записи tolerations полезны, когда вы хотите запустить поды на узлах, которые находятся во временных состояниях запрета размещения или исполнения, например, из-за отказа ноды или планового обслуживания.
+
+
+
+# Домашняя работа 3. Сетевое взаимодействие Pod, сервисы
+
+Вопрос:
+
+Почему следующая конфигурация валидна, но не имеет смысла?
+
+```
+livenessProbe:
+exec:
+command:
+- 'sh'
+- '-c'
+- 'ps aux | grep my_web_server_process'
+```
+
+Потому что запущенные процессы не гарантируют работоспособность web сервиса. Web сервер может работать на другом порту или отдавать не то.
+Такая проверка имеет смысл, если у нас нет возможности запросить у приложения его статус.
+
+Основное задание сделано по методичке.
+Задания со звездочкой:
+
+1. Сделайте сервис LoadBalancer , который откроет доступ к CoreDNS снаружи кластера (позволит получать записи через внешний IP).
+
+Написал манифест dns-service.yaml в папке coredns
+Логика такая:
+Создать 2 сервиса с с заданым значением metallb.universe.tf/allow-shared-ip
+
+2. Добавьте доступ к kubernetes-dashboard через наш Ingress-прокси:
+
+Написал ingress правило для доступа к kubernetes-dashboard
+
+```
+</body></html>root@knd-test-kub-m1:~/elcovstas_platform# curl  http://knd-test-kub-s2.fors.ru/dashboard/
+<!--
+Copyright 2017 The Kubernetes Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+--><!DOCTYPE html><html lang="en" dir="ltr"><head>
+  <meta charset="utf-8">
+  <title>Kubernetes Dashboard</title>
+  <link rel="icon" type="image/png" href="assets/images/kubernetes-logo.png">
+  <meta name="viewport" content="width=device-width">
+<style>html,body{height:100%;margin:0}*::-webkit-scrollbar{background:transparent;height:8px;width:8px}</style><link rel="stylesheet" href="styles.243e6d874431c8e8.css" media="print" onload="this.media='all'"><noscript><link rel="stylesheet" href="styles.243e6d874431c8e8.css"></noscript></head>
+
+<body>
+  <kd-root></kd-root>
+<script src="runtime.134ad7745384bed8.js" type="module"></script><script src="polyfills.5c84b93f78682d4f.js" type="module"></script><script src="scripts.2c4f58d7c579cacb.js" defer></script><script src="en.main.3550e3edca7d0ed8.js" type="module"></script>
+```
+
+3. Canary для Ingress
+
+Для канаречного релиза необходимо создать копию манифестов для разворачивания новой версии приложения и в инресс добавить несколько антонаций:
+
+nginx.ingress.kubernetes.io/canary: "true"
+nginx.ingress.kubernetes.io/canary-by-header: "canary"
+nginx.ingress.kubernetes.io/canary-by-weight: "50"
