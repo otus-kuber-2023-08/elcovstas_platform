@@ -41,4 +41,4 @@ spec:
             mountPath: "/app"
       volumes:
         - name: app
-          emptyDir: {} 
+          emptyDir: {}
