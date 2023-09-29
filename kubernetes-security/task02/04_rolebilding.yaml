@@ -1,0 +1,14 @@
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: pod-access-rolebinding
+  namespace: prometheus
+subjects:
+- kind: Group
+  apiGroup: rbac.authorization.k8s.io
+  name: system:serviceaccounts:prometheus
+roleRef:
+  kind: Role
+  name: pod-access-role
+  apiGroup: rbac.authorization.k8s.io
