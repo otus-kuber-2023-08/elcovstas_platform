@@ -317,3 +317,10 @@ limitations under the License.
 nginx.ingress.kubernetes.io/canary: "true"
 nginx.ingress.kubernetes.io/canary-by-header: "canary"
 nginx.ingress.kubernetes.io/canary-by-weight: "50"
+
+
+# Домашняя работа 4. Security
+
+1. Выполнен Task 1
+2. Выполнен Task 2
+3. Выполнен Task 3
