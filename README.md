@@ -324,3 +324,9 @@ nginx.ingress.kubernetes.io/canary-by-weight: "50"
 1. Выполнен Task 1
 2. Выполнен Task 2
 3. Выполнен Task 3
+
+# Домашняя работа 5. Volumes, Storages, StatefulSet
+
+Создал StatefulSet minio
+Установил local-path-provisioner для Rancher https://github.com/rancher/local-path-provisioner
+Создал minio-ingress и minio-secrets
