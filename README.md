@@ -335,8 +335,8 @@ nginx.ingress.kubernetes.io/canary-by-weight: "50"
 # Домашняя работа 6. Шаблонизация манифестов Kubernetes
 
 1) создал кластер в Яндекс cloud
-2) C помощью Helm установил ingress-nginx
-3) C помощью Helm установил cert manager и создал ресурсы ClusterIssuer https://cloud.yandex.ru/docs/managed-kubernetes/tutorials/ingress-cert-manager
+2) C помощью Helm установил ingress-nginx  https://cloud.yandex.ru/docs/managed-kubernetes/tutorials/ingress-cert-manager
+3) C помощью Helm установил cert manager и создал ресурсы ClusterIssuer 
 4) Установил chartmuseum с помощью helm с созданным ingress правилом с автоматической генерацией Let's Encrypt сертификата:
 
 ```
@@ -354,10 +354,10 @@ ingress:
     cert-manager.io/cluster-issuer: "letsencrypt-staging"
     cert-manager.io/acme-challenge-type: http01
   hosts:
-    - name: chartmuseum.158.160.121.244.nip.io
+    - name: chartmuseum.51.250.87.87.nip.io
       path: /
       tls: true
-      tlsSecret: chartmuseum.158.160.121.244.nip.io
+      tlsSecret: chartmuseum.51.250.87.87.nip.io
 
 # Проверка генерации сертификата
 
@@ -375,7 +375,7 @@ items:
       app.kubernetes.io/name: chartmuseum
       app.kubernetes.io/version: 0.13.1
       helm.sh/chart: chartmuseum-3.1.0
-    name: chartmuseum.158.160.121.244.nip.io
+    name: chartmuseum.51.250.87.87.nip.io
     namespace: chartmuseum
     ownerReferences:
     - apiVersion: networking.k8s.io/v1
@@ -388,12 +388,12 @@ items:
     uid: 5fc2ea80-3913-4b12-9e03-6e2f85b36322
   spec:
     dnsNames:
-    - chartmuseum.158.160.121.244.nip.io
+    - chartmuseum.51.250.87.87.nip.io
     issuerRef:
       group: cert-manager.io
       kind: ClusterIssuer
       name: letsencrypt-staging
-    secretName: chartmuseum.158.160.121.244.nip.io
+    secretName: chartmuseum.51.250.87.87.nip.io
     usages:
     - digital signature
     - key encipherment
@@ -424,10 +424,10 @@ chartmuseum должен быть запушен с переменной DISABLE
 helm pull stable/redmine --version 14.1.1
 ```
 
-Добавляем репотизорий https://chartmuseum.158.160.121.244.nip.io/
+Добавляем репотизорий https://chartmuseum.51.250.87.87.nip.io/
 
 ```
-helm repo add my-chartmuseum https://chartmuseum.158.160.121.244.nip.io/ --insecure-skip-tls-verify
+helm repo add my-chartmuseum https://chartmuseum.51.250.87.87.nip.io/ --insecure-skip-tls-verify
 ```
 
 Устанавливаем плагин
@@ -445,10 +445,10 @@ helm cm-push --insecure redmine-14.1.10.tgz my-chartmuseum
 Проверяем 
 
 ```
-selcov@ubuntu:~/k8s/elcovstas_platform/kubernetes-templating/chartmuseum$ curl -vvvk https://chartmuseum.158.160.121.244.nip.io/api/charts
-*   Trying 158.160.121.244...
+selcov@ubuntu:~/k8s/elcovstas_platform/kubernetes-templating/chartmuseum$ curl -vvvk https://chartmuseum.51.250.87.87.nip.io/api/charts
+*   Trying 51.250.87.87...
 * TCP_NODELAY set
-* Connected to chartmuseum.158.160.121.244.nip.io (158.160.121.244) port 443 (#0)
+* Connected to chartmuseum.51.250.87.87.nip.io (51.250.87.87) port 443 (#0)
 * ALPN, offering h2
 * ALPN, offering http/1.1
 ********
@@ -465,5 +465,12 @@ selcov@ubuntu:~/k8s/elcovstas_platform/kubernetes-templating/chartmuseum$ curl -
 <
 {"redmine":[{"name":"redmine","home":"http://www.redmine.org/","sources":["https://github.com/bitnami/bitnami-docker-redmine"],"version":"14.1.10","description":"A flexible project management web application.","keywords":["redmine","project management","www","http","web","application","ruby","rails"],"maintainers":[{"name":"Bitnami","email":"containers@bitnami.com"}],"icon":"https://bitnami.com/assets/stacks/redmine/img/redmine-stack-220x234.png","apiVersion":"v1","appVersion":"4.1.0","dependencies":[{"name":"mariadb","version":"7.x.x","repository":"https://kubernetes-charts.storage.googleapis.com/","condition":"mariadb.enabled"},{"name":"postgresql","version":"8.x.x","repository":"https://kubernetes-charts.storage.googleapis.com/","condition":"postgresql.enabled"}],"urls":["charts/redmine-14.1.10.tgz"],"created":"2023-10-08T12:26:19.733038054Z","digest":"499a4460cef10d1f2c11a1f23c34500ba7f68349be182e9e772eee22280a0e40"}]}
 * TLSv1.3 (IN), TLS Unknown, Unknown (23):
-* Connection #0 to host chartmuseum.158.160.121.244.nip.io left intact
+* Connection #0 to host chartmuseum.51.250.87.87.nip.io left intact
 ```
+6) Выполнено дополнительное задание с установкой Harbor
+
+```
+helm install harbor harbor/harbor --namespace harbor -f values.yaml --create-namespace
+```
+
+7) Выполнено задание с * "Написание Helmfile"

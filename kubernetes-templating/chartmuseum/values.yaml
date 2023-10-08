@@ -260,10 +260,10 @@ ingress:
     cert-manager.io/cluster-issuer: "letsencrypt-staging"
     cert-manager.io/acme-challenge-type: http01
   hosts:
-    - name: chartmuseum.158.160.121.244.nip.io  
+    - name: chartmuseum.51.250.87.87.nip.io  
       path: /
       tls: true
-      tlsSecret: chartmuseum.158.160.121.244.nip.io  
+      tlsSecret: chartmuseum.51.250.87.87.nip.io  
 
 gcp:
   secret:
