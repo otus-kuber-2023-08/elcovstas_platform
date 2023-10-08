@@ -330,3 +330,140 @@ nginx.ingress.kubernetes.io/canary-by-weight: "50"
 Создал StatefulSet minio
 Установил local-path-provisioner для Rancher https://github.com/rancher/local-path-provisioner
 Создал minio-ingress и minio-secrets
+
+
+# Домашняя работа 6. Шаблонизация манифестов Kubernetes
+
+1) создал кластер в Яндекс cloud
+2) C помощью Helm установил ingress-nginx
+3) C помощью Helm установил cert manager и создал ресурсы ClusterIssuer https://cloud.yandex.ru/docs/managed-kubernetes/tutorials/ingress-cert-manager
+4) Установил chartmuseum с помощью helm с созданным ingress правилом с автоматической генерацией Let's Encrypt сертификата:
+
+```
+# Установка чарта
+
+helm upgrade --install chartmuseum chartmuseum/chartmuseum --version 3.1.0 --wait --namespace=chartmuseum --create-namespace  -f chartmuseum/values.yaml
+
+# Содержимое ingress в values 
+
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    kubernetes.io/tls-acme: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-staging"
+    cert-manager.io/acme-challenge-type: http01
+  hosts:
+    - name: chartmuseum.158.160.121.244.nip.io
+      path: /
+      tls: true
+      tlsSecret: chartmuseum.158.160.121.244.nip.io
+
+# Проверка генерации сертификата
+
+selcov@ubuntu:~/k8s/elcovstas_platform$ kubectl get certificate -n chartmuseum -o yaml
+apiVersion: v1
+items:
+- apiVersion: cert-manager.io/v1
+  kind: Certificate
+  metadata:
+    creationTimestamp: "2023-10-08T11:16:06Z"
+    generation: 1
+    labels:
+      app.kubernetes.io/instance: chartmuseum
+      app.kubernetes.io/managed-by: Helm
+      app.kubernetes.io/name: chartmuseum
+      app.kubernetes.io/version: 0.13.1
+      helm.sh/chart: chartmuseum-3.1.0
+    name: chartmuseum.158.160.121.244.nip.io
+    namespace: chartmuseum
+    ownerReferences:
+    - apiVersion: networking.k8s.io/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Ingress
+      name: chartmuseum
+      uid: 2d8bef37-6fdb-42fb-af2b-d77817bea831
+    resourceVersion: "45055"
+    uid: 5fc2ea80-3913-4b12-9e03-6e2f85b36322
+  spec:
+    dnsNames:
+    - chartmuseum.158.160.121.244.nip.io
+    issuerRef:
+      group: cert-manager.io
+      kind: ClusterIssuer
+      name: letsencrypt-staging
+    secretName: chartmuseum.158.160.121.244.nip.io
+    usages:
+    - digital signature
+    - key encipherment
+  status:
+    conditions:
+    - lastTransitionTime: "2023-10-08T11:16:32Z"
+      message: Certificate is up to date and has not expired
+      observedGeneration: 1
+      reason: Ready
+      status: "True"
+      type: Ready
+    notAfter: "2024-01-06T10:16:27Z"
+    notBefore: "2023-10-08T10:16:28Z"
+    renewalTime: "2023-12-07T10:16:27Z"
+    revision: 1
+kind: List
+metadata:
+  resourceVersion: ""
+
+```
+
+5) Задание со * "Научитесь работать с chartmuseum"
+
+chartmuseum должен быть запушен с переменной DISABLE_API: false 
+
+Пулим redmine из публичного репотизория
+```
+helm pull stable/redmine --version 14.1.1
+```
+
+Добавляем репотизорий https://chartmuseum.158.160.121.244.nip.io/
+
+```
+helm repo add my-chartmuseum https://chartmuseum.158.160.121.244.nip.io/ --insecure-skip-tls-verify
+```
+
+Устанавливаем плагин
+
+```
+helm plugin install https://github.com/chartmuseum/helm-push
+```
+
+Пушим
+
+```
+helm cm-push --insecure redmine-14.1.10.tgz my-chartmuseum
+```
+
+Проверяем 
+
+```
+selcov@ubuntu:~/k8s/elcovstas_platform/kubernetes-templating/chartmuseum$ curl -vvvk https://chartmuseum.158.160.121.244.nip.io/api/charts
+*   Trying 158.160.121.244...
+* TCP_NODELAY set
+* Connected to chartmuseum.158.160.121.244.nip.io (158.160.121.244) port 443 (#0)
+* ALPN, offering h2
+* ALPN, offering http/1.1
+********
+* Connection state changed (MAX_CONCURRENT_STREAMS updated)!
+* TLSv1.3 (OUT), TLS Unknown, Unknown (23):
+* TLSv1.3 (IN), TLS Unknown, Unknown (23):
+* TLSv1.3 (IN), TLS Unknown, Unknown (23):
+< HTTP/2 200
+< date: Sun, 08 Oct 2023 12:36:07 GMT
+< content-type: application/json; charset=utf-8
+< content-length: 937
+< x-request-id: e2f269c45179cd8cead7853cd2d9d0d3
+< strict-transport-security: max-age=15724800; includeSubDomains
+<
+{"redmine":[{"name":"redmine","home":"http://www.redmine.org/","sources":["https://github.com/bitnami/bitnami-docker-redmine"],"version":"14.1.10","description":"A flexible project management web application.","keywords":["redmine","project management","www","http","web","application","ruby","rails"],"maintainers":[{"name":"Bitnami","email":"containers@bitnami.com"}],"icon":"https://bitnami.com/assets/stacks/redmine/img/redmine-stack-220x234.png","apiVersion":"v1","appVersion":"4.1.0","dependencies":[{"name":"mariadb","version":"7.x.x","repository":"https://kubernetes-charts.storage.googleapis.com/","condition":"mariadb.enabled"},{"name":"postgresql","version":"8.x.x","repository":"https://kubernetes-charts.storage.googleapis.com/","condition":"postgresql.enabled"}],"urls":["charts/redmine-14.1.10.tgz"],"created":"2023-10-08T12:26:19.733038054Z","digest":"499a4460cef10d1f2c11a1f23c34500ba7f68349be182e9e772eee22280a0e40"}]}
+* TLSv1.3 (IN), TLS Unknown, Unknown (23):
+* Connection #0 to host chartmuseum.158.160.121.244.nip.io left intact
+```
