@@ -474,3 +474,7 @@ helm install harbor harbor/harbor --namespace harbor -f values.yaml --create-nam
 ```
 
 7) Выполнено задание с * "Написание Helmfile"
+
+8) C помощью Helm установил hipster-shop, параматезировал Helm Chart
+9) Вынес Frontend и Redis в отдельный Chart, также подключил зависимости в hipster-shop. Параматезировал Helm Chart
+10) Настроил зашифрованные Sercets в Frontend
