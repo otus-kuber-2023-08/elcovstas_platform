@@ -484,7 +484,7 @@ helm install harbor harbor/harbor --namespace harbor -f values.yaml --create-nam
 В процессе сделано:
 Изучены кастомные ресурсы и создан оператор для управления CRD.
 
-вывод команды kubectl get jobs:
+вывод команд:
 
 ```
 $ kubectl get jobs.batch
