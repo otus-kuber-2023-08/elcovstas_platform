@@ -478,3 +478,25 @@ helm install harbor harbor/harbor --namespace harbor -f values.yaml --create-nam
 8) C помощью Helm установил hipster-shop, параматезировал Helm Chart
 9) Вынес Frontend и Redis в отдельный Chart, также подключил зависимости в hipster-shop. Параматезировал Helm Chart
 10) Настроил зашифрованные Sercets в Frontend
+
+# Домашняя работа 7. Операторы, CustomResourceDefifinition
+
+В процессе сделано:
+Изучены кастомные ресурсы и создан оператор для управления CRD.
+
+вывод команды kubectl get jobs:
+
+$ kubectl get jobs.batch
+NAME                         COMPLETIONS   DURATION   AGE
+backup-mysql-instance-job    1/1           2s         6m3s
+restore-mysql-instance-job   1/1           93s        4m40s
+Вывод
+
+kubectl exec -it $MYSQLPOD -- mysql -potuspassword -e "select * from test;" otus-database
+mysql: [Warning] Using a password on the command line interface can be insecure.
++----+-------------+
+| id | name        |
++----+-------------+
+|  1 | some data   |
+|  2 | some data-2 |
++----+-------------+
