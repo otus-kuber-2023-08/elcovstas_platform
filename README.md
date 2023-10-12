@@ -486,6 +486,7 @@ helm install harbor harbor/harbor --namespace harbor -f values.yaml --create-nam
 
 вывод команды kubectl get jobs:
 
+```
 $ kubectl get jobs.batch
 NAME                         COMPLETIONS   DURATION   AGE
 backup-mysql-instance-job    1/1           2s         6m3s
@@ -500,3 +501,4 @@ mysql: [Warning] Using a password on the command line interface can be insecure.
 |  1 | some data   |
 |  2 | some data-2 |
 +----+-------------+
+```
