@@ -16,8 +16,9 @@ spec:
     spec:
       containers:
         - name: nginx-exporter
-          image: nginx/nginx-prometheus-exporter:0.11.0
+          image: nginx/nginx-prometheus-exporter:0.10.0
           ports:
-            - containerPort: 9113
+            - name: nginx-exp
+              containerPort: 9113  
           args:
-            - '-nginx.scrape-uri=http://nginx-monitoring-service/basic_status'
+            - '-nginx.scrape-uri=http://nginx-monitoring/basic_status'

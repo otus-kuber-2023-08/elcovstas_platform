@@ -1,0 +1,12 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: example
+  labels:
+    app: example
+spec:
+  selector:
+    app: example
+  ports:
+  - name: backend
+    port: 8080
