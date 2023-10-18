@@ -49,7 +49,7 @@ spec:
   serviceAccountName: prometheus
   serviceMonitorSelector:
     matchLabels:
-      team: nginx
+      team: nginx-otus
   resources:
     requests:
       memory: 400Mi
