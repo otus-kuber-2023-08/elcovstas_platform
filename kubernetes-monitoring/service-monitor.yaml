@@ -6,7 +6,7 @@ metadata:
     team: nginx
 spec:
   selector:
-#    matchLabels:
+    matchLabels:
       app: nginx-exporter
   endpoints:
   - port: nginx-exp
