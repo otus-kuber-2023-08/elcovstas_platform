@@ -512,6 +512,6 @@ mysql: [Warning] Using a password on the command line interface can be insecure.
 5) Задеплоил prometheus и Grafana
 6) Проверил статусы в интерфейсе prometheus
 
-![prometheus](/prometheus.PNG)
+![prometheus](/kubernetes-monitoring/prometheus.PNG)
 7) Создал дашбоард для nginx-exporter
-![prometheus](/grafana.PNG)
+![prometheus](/kubernetes-monitoring/grafana.PNG)
