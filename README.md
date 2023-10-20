@@ -502,3 +502,16 @@ mysql: [Warning] Using a password on the command line interface can be insecure.
 |  2 | some data-2 |
 +----+-------------+
 ```
+
+# Домашняя работа 8. Мониторинг сервиса в кластере k8s
+
+1) Написал deployment, Config Map и service nginx
+2) Написал deployment, Config Map и service nginx-exporter
+3) Установил prometheus operator c помощью kubectl
+4) Написал ServiceMonitor для nginx-exporter
+5) Задеплоил prometheus и Grafana
+6) Проверил статусы в интерфейсе prometheus
+
+![prometheus](/kubernetes-monitoring/prometheus.PNG)
+7) Создал дашбоард для nginx-exporter
+![prometheus](/kubernetes-monitoring/grafana.PNG)
