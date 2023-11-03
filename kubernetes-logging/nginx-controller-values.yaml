@@ -1,0 +1,7 @@
+controller:
+  replicaCount: 3
+
+  tolerations:
+    - key: node-role
+      value: infra
+      effect: NoSchedule
