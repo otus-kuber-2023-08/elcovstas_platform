@@ -406,7 +406,7 @@ config:
   outputs: |
     [OUTPUT]
         Name es
-        Match node.*
+        Match kube.*
         Host elasticsearch-master
         Port 9200
         Logstash_Format On
@@ -416,10 +416,14 @@ config:
         Suppress_Type_Name On
         Trace_Error On
         Trace_Output Off
+        tls On
+        tls.verify Off
+        http_user elastic
+        http_passwd NqpTChNx63u03LS3
 
     [OUTPUT]
         Name es
-        Match ingress.*
+        Match host.*
         Host elasticsearch-master
         Port 9200
         Logstash_Format On
@@ -429,17 +433,10 @@ config:
         Suppress_Type_Name On
         Trace_Error On
         Trace_Output Off
-    
-    [OUTPUT]
-        Name es
-        Match service.*
-        Host elasticsearch-master
-        Port 9200
-        Logstash_Format On
-        Logstash_Prefix service
-        Suppress_Type_Name On
-        Trace_Error On
-        Trace_Output Off    
+        tls On
+        tls.verify Off
+        http_user elastic
+        http_passwd NqpTChNx63u03LS3
 
 
   ## https://docs.fluentbit.io/manual/administration/configuring-fluent-bit/classic-mode/upstream-servers
