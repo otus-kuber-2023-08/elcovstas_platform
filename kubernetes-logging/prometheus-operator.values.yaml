@@ -74,3 +74,11 @@ grafana:
       - grafana.158.160.0.19.nip.io
     paths:
       - /
+      
+  additionalDataSources:
+    - name: Loki
+      type: loki
+      access: proxy
+      url: http://loki:3100
+      jsonData:
+        maxLines: 1000    
