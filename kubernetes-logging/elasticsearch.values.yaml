@@ -7,3 +7,4 @@ tolerations:
     operator: Equal
     value: infra
     effect: NoSchedule
+    

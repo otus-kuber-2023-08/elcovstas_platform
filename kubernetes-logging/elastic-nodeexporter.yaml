@@ -1,0 +1,14 @@
+replicaCount: 3
+
+tolerations: 
+  - key: node-role
+    operator: Equal
+    value: infra
+    effect: NoSchedule
+    
+es:
+  uri: https://elastic:NqpTChNx63u03LS3@elasticsearch-master:9200 
+  sslSkipVerify: true
+  
+serviceMonitor:
+  enabled: true 
