@@ -1,0 +1,17 @@
+image: kibana
+imageTag: 8.10.3
+
+tolerations:
+  - key: node-role
+    operator: Equal
+    value: infra
+    effect: NoSchedule
+
+ingress:
+  enabled: true
+  annotations: []
+    #kubernetes.io/ingress.class: nginx
+  hosts:
+    - host: kibana.158.160.0.19.nip.io
+      paths:
+        - path: /

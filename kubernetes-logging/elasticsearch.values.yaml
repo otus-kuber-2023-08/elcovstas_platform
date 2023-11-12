@@ -1,0 +1,10 @@
+image: "elasticsearch"
+imageTag: "8.10.3"
+imagePullPolicy: "IfNotPresent"
+
+tolerations:
+  - key: node-role
+    operator: Equal
+    value: infra
+    effect: NoSchedule
+    
