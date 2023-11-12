@@ -516,7 +516,7 @@ mysql: [Warning] Using a password on the command line interface can be insecure.
 7) Создал дашбоард для nginx-exporter
 ![prometheus](/kubernetes-monitoring/grafana.PNG)
 
-# Домашняя работа 9. Логгирование
+# Домашняя работа 9. Логирование
 
 1) Установил EFK стэк
 2) Установил Prometheus, Grafana, Loki
