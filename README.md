@@ -513,6 +513,8 @@ mysql: [Warning] Using a password on the command line interface can be insecure.
 6) Проверил статусы в интерфейсе prometheus
 
 ![prometheus](/kubernetes-monitoring/prometheus.PNG)
+7) Создал дашбоард для nginx-exporter
+![prometheus](/kubernetes-monitoring/grafana.PNG)
 
 # Домашняя работа 9. Логгирование
 
