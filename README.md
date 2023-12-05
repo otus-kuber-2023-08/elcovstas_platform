@@ -523,3 +523,363 @@ mysql: [Warning] Using a password on the command line interface can be insecure.
 3) Настроил мониторинг ElasticSearch
 4) Настроил вывод логов nginx-ingress и остальных контейнеров в EFK и Grafana.
 5) Пробовал рисовать Dashboard
+
+# Домашяя работа 11. Hashicorp Vault + K8s
+
+1) Установил consul и Vault с помощью Helm
+
+
+
+```
+selcov@ubuntu:~/k8s/elcovstas_platform/kubernetes-vault$ helm status consul
+NAME: consul
+LAST DEPLOYED: Sun Dec  3 20:07:53 2023
+NAMESPACE: default
+STATUS: deployed
+REVISION: 1
+NOTES:
+Thank you for installing HashiCorp Consul!
+
+Your release is named consul.
+
+To learn more about the release, run:
+
+  $ helm status consul --namespace default
+  $ helm get all consul --namespace default
+
+Consul on Kubernetes Documentation:
+https://www.consul.io/docs/platform/k8s
+
+Consul on Kubernetes CLI Reference:
+https://www.consul.io/docs/k8s/k8s-cli
+
+selcov@ubuntu:~/k8s/elcovstas_platform/kubernetes-vault$ helm status vault
+NAME: vault
+LAST DEPLOYED: Sun Dec  3 20:15:42 2023
+NAMESPACE: default
+STATUS: deployed
+REVISION: 1
+NOTES:
+Thank you for installing HashiCorp Vault!
+
+Now that you have deployed Vault, you should look over the docs on using
+Vault with Kubernetes available here:
+
+https://developer.hashicorp.com/vault/docs
+
+
+Your release is named vault. To learn more about the release, try:
+
+  $ helm status vault
+  $ helm get manifest vault
+
+```
+
+Инициизируем vault
+
+```
+selcov@ubuntu:~/k8s/elcovstas_platform/kubernetes-vault$ kubectl exec -it vault-0  -- vault operator init
+Unseal Key 1: 43KZMuFcDmofcgj7UTAd2JfVb7U2v93JIgVLv0CtLvWa
+Unseal Key 2: MjwWxDam98t5/xSiHj7V5JX8r6ai82qs4uswUSSm2QMS
+Unseal Key 3: 4cKLX53JUOpVgdkG0Q8iBmidp4y5Fk6YfhV6bBMRMA8e
+Unseal Key 4: L89PqYKNRSsjG0WPYTg+A4+o0c4F7MtYVEjkNpJRB2lH
+Unseal Key 5: PmfS5lnzlt0FZb8hcYys1CTrv8NPtpciYGBc3EYqGIE+
+
+Initial Root Token: hvs.Peff4kxjfGQG1imIUcjPqAvt
+
+Vault initialized with 5 key shares and a key threshold of 3. Please securely
+distribute the key shares printed above. When the Vault is re-sealed,
+restarted, or stopped, you must supply at least 3 of these keys to unseal it
+before it can start servicing requests.
+
+Vault does not store the generated root key. Without at least 3 keys to
+reconstruct the root key, Vault will remain permanently sealed!
+
+It is possible to generate new unseal keys, provided you have a quorum of
+existing unseal keys shares. See "vault operator rekey" for more information.
+```
+
+Распечатываем vault
+
+```
+Key             Value
+---             -----
+Seal Type       shamir
+Initialized     true
+Sealed          false
+Total Shares    5
+Threshold       3
+Version         1.15.2
+Build Date      2023-11-06T11:33:28Z
+Storage Type    consul
+Cluster Name    vault-cluster-0f7b639b
+Cluster ID      066130cb-db88-289c-30de-fe93ce71e1bc
+HA Enabled      true
+HA Cluster      https://vault-0.vault-internal:8201
+HA Mode         active
+Active Since    2023-12-03T17:22:13.400233148Z
+```
+
+Аутентификация в vault
+
+```
+Path      Type     Accessor               Description                Version
+----      ----     --------               -----------                -------
+token/    token    auth_token_f9f94180    token based credentials    n/a
+
+```
+
+Добавим секреты
+```
+selcov@ubuntu:~/k8s/elcovstas_platform/kubernetes-vault$ kubectl -n vault exec -it vault-0 -- vault read otus/otus-ro/config
+Key                 Value
+---                 -----
+refresh_interval    768h
+password            asajkjkahs
+username            otus
+```
+
+Включили авторизацию k8s
+
+```
+selcov@ubuntu:~/k8s/elcovstas_platform/kubernetes-vault$ kubectl -n vault exec -it vault-0 -- vault auth list
+Path           Type          Accessor                    Description                Version
+----           ----          --------                    -----------                -------
+kubernetes/    kubernetes    auth_kubernetes_8cf36aee    n/a                        n/a
+token/         token         auth_token_f9f94180         token based credentials    n/a
+
+```
+
+```
+selcov@ubuntu:~/k8s/elcovstas_platform/kubernetes-vault$ export SA_SECRET_NAME=$(kubectl get secrets --output=json| jq -r '.items[].metadata | select(.name|startswith("vault-auth-")).name')
+selcov@ubuntu:~/k8s/elcovstas_platform/kubernetes-vault$ export SA_JWT_TOKEN=$(kubectl get secret $SA_SECRET_NAME --output 'go-template={{ .data.token }}' | base64 --decode)
+selcov@ubuntu:~/k8s/elcovstas_platform/kubernetes-vault$ export SA_CA_CRT=$(kubectl config view --raw --minify --flatten --output 'jsonpath={.clusters[].cluster.certificate-authority-data}' | base64 --decode)
+selcov@ubuntu:~/k8s/elcovstas_platform/kubernetes-vault$ export K8S_HOST=$(kubectl config view --raw --minify --flatten --output 'jsonpath={.clusters[].cluster.server}')
+selcov@ubuntu:~/k8s/elcovstas_platform/kubernetes-vault$ kubectl exec  -it vault-0 -- vault write auth/kubernetes/config \ token_reviewer_jwt="$SA_JWT_TOKEN" \
+> kubernetes_host="$K8S_HOST" \
+> kubernetes_ca_cert="$SA_CA_CRT"
+Success! Data written to: auth/kubernetes/config
+```
+
+Создаём политику в vault
+
+```
+selcov@ubuntu:~/k8s/elcovstas_platform/kubernetes-vault$ kubectl cp otus-policy.hcl vault-0:./tmp/
+selcov@ubuntu:~/k8s/elcovstas_platform/kubernetes-vault$ kubectl exec -it vault-0 -- vault policy write otus-policy /tmp/otus-policy.hcl
+Success! Uploaded policy: otus-policy
+selcov@ubuntu:~/k8s/elcovstas_platform/kubernetes-vault$ kubectl exec -it vault-0 -- vault write auth/kubernetes/role/otus \
+> bound_service_account_names=vault-auth \
+> bound_service_account_namespaces=default policies=otus-policy ttl=24h
+Success! Data written to: auth/kubernetes/role/otus
+```
+
+Получение токена
+
+```/ # curl --request POST --data '{"jwt": "'$KUBE_TOKEN'", "role": "otus"}' $VAULT_ADDR/v1/auth/kubernetes/login | jq
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100  1713  10{     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+0   "request_id": "f04ab959-426c-ad25-f10f-a7c64725a3c3",
+   "lease_id": "",
+ 74  "renewable": false,
+9  "lease_duration": 0,
+   "data": null,
+ 1  "wrap_info": null,
+00  "warnings": null,
+    "auth": {
+964     "client_token": "hvs.CAESIECltA3ma9c4OcZqVOdMB0e7gl3qM3rvatWbtSYmj7reGh4KHGh2cy4zbk82NDc0NEN2NXNMc1FMUk1EaG0wWEc",
+     "accessor": "wy9vDNipWXtUomJjAwVzizgu",
+15    "policies": [9
+36      "default",
+        "otus-policy"
+2    ],
+05    "token_policies": [
+10      "default",
+       "otus-policy"
+-    ],
+-    "metadata": {
+:      "role": "otus"-,
+-      "service_account_name": "vault-auth",
+:--      "service_account_namespace": "default",
+ -      "service_account_secret_name": "",
+-:      "service_account_uid": "8fb78ef8-b22f-477c-8430-6f74ea2604ad"
+-    },
+-:    "lease_duration": 86400,
+--     "renewable": true,
+--    "entity_id": "788128af-0cd5-d272-0bbf-3c841238493b",
+:    "token_type": "service"-,
+-    "orphan": true,
+:--    "mfa_requirement": null,
+ 3    "num_uses": 06
+4  }
+46
+}
+```
+
+Проверка токена
+
+```
+/ # curl --header "X-Vault-Token:hvs.CAESIECltA3ma9c4OcZqVOdMB0e7gl3qM3rvatWbtSYmj7reGh4KHGh2cy4zbk82NDc0NEN2NXNMc1FMUk1EaG0wWEc" $VAULT_ADDR/v1/otus/otus-ro/config
+{"request_id":"e824fd3a-0aa1-65ef-d88a-efc6bd443b05","lease_id":"","renewable":false,"lease_duration":2764800,"data":{"password":"asajkjkahs","username":"otus"},"wrap_info":null,"warnings":null,"auth":null}
+/ # curl --header "X-Vault-Token:hvs.CAESIECltA3ma9c4OcZqVOdMB0e7gl3qM3rvatWbtSYmj7reGh4KHGh2cy4zbk82NDc0NEN2NXNMc1FMUk1EaG0wWEc" $VAULT_ADDR/v1/otus/otus-rw/config
+{"request_id":"4896eff1-a7c6-a212-139a-24572ba8b3d5","lease_id":"","renewable":false,"lease_duration":2764800,"data":{"password":"asajkjkahs","username":"otus"},"wrap_info":null,"warnings":null,"auth":null
+```
+
+Почему мы смогли записать otus-rw/config1 но не смогли otusrw/config?
+
+Для записи в otus-rw нужна capability update.
+
+
+Создание сертификата
+
+```
+
+selcov@ubuntu:~/k8s/elcovstas_platform/kubernetes-vault$ kubectl exec -it vault-0 -- vault write pki_int/intermediate/set-signed certificate=@/tmp/intermediate.cert.pem
+WARNING! The following warnings were returned from Vault:
+
+  * This mount hasn't configured any authority information access (AIA)
+  fields; this may make it harder for systems to find missing certificates
+  in the chain or to validate revocation status of certificates. Consider
+  updating /config/urls or the newly generated issuer with this information.
+
+Key                 Value
+---                 -----
+existing_issuers    <nil>
+existing_keys       <nil>
+imported_issuers    [2711c953-e379-04f5-b151-484f650ef659 fcde7a47-1cba-4cc5-0fb1-6455d7e0cc18]
+imported_keys       <nil>
+mapping             map[2711c953-e379-04f5-b151-484f650ef659:2b6b60da-3180-8ec9-2a89-ead2dbbec070 fcde7a47-1cba-4cc5-0fb1-6455d7e0cc18:]
+selcov@ubuntu:~/k8s/elcovstas_platform/kubernetes-vault$ kubectl exec -it vault-0 -- vault write pki_int/issue/example-dot-ru common_name="dev.example.ru" ttl="24h"
+Key                 Value
+---                 -----
+ca_chain            [-----BEGIN CERTIFICATE-----
+MIIDnDCCAoSgAwIBAgIUTJWR7FqhHkvHLqIZ26TwGRQI0XwwDQYJKoZIhvcNAQEL
+BQAwFTETMBEGA1UEAxMKZXhtYXBsZS5ydTAeFw0yMzEyMDMxODMyNTVaFw0yODEy
+MDExODMzMjVaMCwxKjAoBgNVBAMTIWV4YW1wbGUucnUgSW50ZXJtZWRpYXRlIEF1
+dGhvcml0eTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAMLiiSkShRnm
+Z6gyelfrrrioFpfoQJplLI1v3Wi0ftXQAnqwuafHX7xye3baT521dbYtlTb5hqeY
+UOeor+ReT/+nCCgmFWfsCAOK+4Nqfgu4VtEkU4sKCpT2ZhfMwdFeYci2DKWK/Lao
+XhUpYHwyGK95Slu6I9x8esnSq1+OiLCFfRPIQm4p5AkkCAMFuWhziIuVEVucH1IC
+3InnQFmVunvVQvNlbjlQsCssmrXOPrCZ6M37NJE/YPvZBwSjjx/AHBZp8IEaLmy0
+v0CGikG09TQ4ierueWvf/tTBkFUiC1Zh27v+VGhC3gfYi0H9q3p3NAoCdsk1xJEA
+5V1zaFNtmW8CAwEAAaOBzDCByTAOBgNVHQ8BAf8EBAMCAQYwDwYDVR0TAQH/BAUw
+AwEB/zAdBgNVHQ4EFgQUPQcuKls/EevrxMU3tKquvOJqhBowHwYDVR0jBBgwFoAU
+j9sBKVqvDyPPVyhx26GdHgk++bowNwYIKwYBBQUHAQEEKzApMCcGCCsGAQUFBzAC
+hhtodHRwOi8vdmF1bHQ6ODIwMC92MS9wa2kvY2EwLQYDVR0fBCYwJDAioCCgHoYc
+aHR0cDovL3ZhdWx0OjgyMDAvdjEvcGtpL2NybDANBgkqhkiG9w0BAQsFAAOCAQEA
+NQheM5CqUR7MLHEQwWVlQxY+ptWDKr8BN2xmthdviGrNvehTNOJ7MFLw1zbSFPcC
+Tfny+nEUmaz6y4usgwuQ1hLx/R7gDY19pUG2I7FhvuIMrXdEult8r2NGaCrwwF7E
+MpbPEbz+yX283mg6lxrVWVN0wDgC6tip16N08oQkiKgoPd+zc7I2COAEm6Rc1x9v
+V4F+j0jmQ4MKQR8DpeZlJrUnUuvwOTPDEXzD4Er394jjRfMjiGC4a/sOWX8j7jhg
+CUINGGDb5BAl+9oGKbAwuAoeaNJ6WU8BmT+ehDeKHMVZzl9bl3pf4LE7trji4P0T
+Rm+/N4BPQPDv6Px90r5Tog==
+-----END CERTIFICATE----- -----BEGIN CERTIFICATE-----
+MIIDMjCCAhqgAwIBAgIUCGkGH0DrcIRm3JkArmtA4mtYvoEwDQYJKoZIhvcNAQEL
+BQAwFTETMBEGA1UEAxMKZXhtYXBsZS5ydTAeFw0yMzEyMDMxODE5NTBaFw0zMzEx
+MzAxODIwMjBaMBUxEzARBgNVBAMTCmV4bWFwbGUucnUwggEiMA0GCSqGSIb3DQEB
+AQUAA4IBDwAwggEKAoIBAQDyNmllpz0X4P7ZHqV3sZQjYyJGxh9wNcLEm9mIxCsH
+eW4GmYYuE7SQPW0/37wx/ODajyMK6GSLJkgYCQ3mX16LUS6UWQySAETrBpW/7YJC
+PzqiY2v2NFpeqQbxESy97LRoM/IG21MNO8BB7HtTiHOIRHIwLpui+BzDVFD+EF5Q
+YYrKo+tIeL0RWwy++V1rULSnSAbvFHVK66iXq+KaoESAcW1D3swxB07W8hbCJkvg
+mPvpqLLSyo0fl7iv3TmvCzI9UFb99fsnGTNYgSfB3h3sm81gKFOcNSrn/kymqOUd
+tCljaLW//PZGSDw14J9UsMfa9PwEoGE/q+BkGeEJ7427AgMBAAGjejB4MA4GA1Ud
+DwEB/wQEAwIBBjAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSP2wEpWq8PI89X
+KHHboZ0eCT75ujAfBgNVHSMEGDAWgBSP2wEpWq8PI89XKHHboZ0eCT75ujAVBgNV
+HREEDjAMggpleG1hcGxlLnJ1MA0GCSqGSIb3DQEBCwUAA4IBAQC+nyr7nOBtTgBl
+hLgq+1wsOIU50pN9SHolBdCiaCgsqaGh7/g0O1KGlpiMCi0FUXkZWRbOtkFYA/sa
+RvAkT8nbVKOLmknnIlGShqWyy37XAS7eXOMUM4itvrBvlMond67pGtqSD48a363Y
+70mPriM/UTKgfRXhGEXnGWkJjSUJ9mjMyaSxQfju0lROAPbApU6PZR1+ZvxhdAe0
+JrFLSFoanWP8TyKKt0uV+hxt1hcFvfF66324v0doI+tvvoxJlLVwpYlzRQWTl106
+GBBYI0+lIYJiQeJ39rpoC3H9ltcSUgoNezmk9rJJ98zCK3G66r7TGnvi/53qO7xg
+yZ4UHi+f
+-----END CERTIFICATE-----]
+certificate         -----BEGIN CERTIFICATE-----
+MIIDYTCCAkmgAwIBAgIUJKNnx0fYN4q56QunoJK6SJ04ziMwDQYJKoZIhvcNAQEL
+BQAwLDEqMCgGA1UEAxMhZXhhbXBsZS5ydSBJbnRlcm1lZGlhdGUgQXV0aG9yaXR5
+MB4XDTIzMTIwMzE4MzMyM1oXDTIzMTIwNDE4MzM1M1owGTEXMBUGA1UEAxMOZGV2
+LmV4YW1wbGUucnUwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCxFbnO
+/rdF0L7c1k+5kPFR0XrkfFHTMAUkJhE6l8LG0WjFxWOkKwAe8W8j1qSY39H4KgJq
++kJLevwkjJG8CNavl0NQkog6k6QdU8jJrrzfcV1uc4tk4YP4PiXBBPETaCUixHGA
+6L9jT8mx0/sDer5YcZFIjPHH8mSUhQxRAv1XxUr0Y9BBnUhP/LPN0Tw963yOm+5A
+skp5PpRtGMefzGIW4PoJY9pDjiPwIBvvTA9K3GcwSvRF68SI8aUpsXcMW3jReyct
+2o8M9dGRVUB6NyckwujlclDOkrTdHXpLcaX2IzrMlTZcrBixthk0bu/tP13aYhDK
+d9jHeU8kS0Q2O6hzAgMBAAGjgY0wgYowDgYDVR0PAQH/BAQDAgOoMB0GA1UdJQQW
+MBQGCCsGAQUFBwMBBggrBgEFBQcDAjAdBgNVHQ4EFgQUdM/KsTo3hr3wgOX7Q7FQ
+yHj1MQkwHwYDVR0jBBgwFoAUPQcuKls/EevrxMU3tKquvOJqhBowGQYDVR0RBBIw
+EIIOZGV2LmV4YW1wbGUucnUwDQYJKoZIhvcNAQELBQADggEBAKTOEedz6M+5W5U7
+qEKy63yhulMFFB1mp2kO8udYGkg5tZ7bKoG4WX7fcfXYJmrm31xza1LTYdp5GtVu
+6dB58eEDvyTX+7fouf6sFXvqrDPcs3G9zNpEHUqJoCWvl5POS+lcwykEc4Yinhq7
+YICueXk1kXIEpC1aoIxzevWu2Ymb5gwMk2NCi6+njKMH/vVUAoA1WeQLBX1Pq688
+kO3fnC6Q6l9V16WYk3bte1O8yJfJTsCTjIELwqOPCUZmCwy28vftiqUEtkZfLGC1
+mMEysTnZwWMbU9oxLwW+RnaAmlDG9CXe7/NWiRJkPK+LqvOZcHupTcan8TeBPJSp
++6p5Kb4=
+-----END CERTIFICATE-----
+expiration          1701714833
+issuing_ca          -----BEGIN CERTIFICATE-----
+MIIDnDCCAoSgAwIBAgIUTJWR7FqhHkvHLqIZ26TwGRQI0XwwDQYJKoZIhvcNAQEL
+BQAwFTETMBEGA1UEAxMKZXhtYXBsZS5ydTAeFw0yMzEyMDMxODMyNTVaFw0yODEy
+MDExODMzMjVaMCwxKjAoBgNVBAMTIWV4YW1wbGUucnUgSW50ZXJtZWRpYXRlIEF1
+dGhvcml0eTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAMLiiSkShRnm
+Z6gyelfrrrioFpfoQJplLI1v3Wi0ftXQAnqwuafHX7xye3baT521dbYtlTb5hqeY
+UOeor+ReT/+nCCgmFWfsCAOK+4Nqfgu4VtEkU4sKCpT2ZhfMwdFeYci2DKWK/Lao
+XhUpYHwyGK95Slu6I9x8esnSq1+OiLCFfRPIQm4p5AkkCAMFuWhziIuVEVucH1IC
+3InnQFmVunvVQvNlbjlQsCssmrXOPrCZ6M37NJE/YPvZBwSjjx/AHBZp8IEaLmy0
+v0CGikG09TQ4ierueWvf/tTBkFUiC1Zh27v+VGhC3gfYi0H9q3p3NAoCdsk1xJEA
+5V1zaFNtmW8CAwEAAaOBzDCByTAOBgNVHQ8BAf8EBAMCAQYwDwYDVR0TAQH/BAUw
+AwEB/zAdBgNVHQ4EFgQUPQcuKls/EevrxMU3tKquvOJqhBowHwYDVR0jBBgwFoAU
+j9sBKVqvDyPPVyhx26GdHgk++bowNwYIKwYBBQUHAQEEKzApMCcGCCsGAQUFBzAC
+hhtodHRwOi8vdmF1bHQ6ODIwMC92MS9wa2kvY2EwLQYDVR0fBCYwJDAioCCgHoYc
+aHR0cDovL3ZhdWx0OjgyMDAvdjEvcGtpL2NybDANBgkqhkiG9w0BAQsFAAOCAQEA
+NQheM5CqUR7MLHEQwWVlQxY+ptWDKr8BN2xmthdviGrNvehTNOJ7MFLw1zbSFPcC
+Tfny+nEUmaz6y4usgwuQ1hLx/R7gDY19pUG2I7FhvuIMrXdEult8r2NGaCrwwF7E
+MpbPEbz+yX283mg6lxrVWVN0wDgC6tip16N08oQkiKgoPd+zc7I2COAEm6Rc1x9v
+V4F+j0jmQ4MKQR8DpeZlJrUnUuvwOTPDEXzD4Er394jjRfMjiGC4a/sOWX8j7jhg
+CUINGGDb5BAl+9oGKbAwuAoeaNJ6WU8BmT+ehDeKHMVZzl9bl3pf4LE7trji4P0T
+Rm+/N4BPQPDv6Px90r5Tog==
+-----END CERTIFICATE-----
+private_key         -----BEGIN RSA PRIVATE KEY-----
+MIIEpAIBAAKCAQEAsRW5zv63RdC+3NZPuZDxUdF65HxR0zAFJCYROpfCxtFoxcVj
+pCsAHvFvI9akmN/R+CoCavpCS3r8JIyRvAjWr5dDUJKIOpOkHVPIya6833FdbnOL
+ZOGD+D4lwQTxE2glIsRxgOi/Y0/JsdP7A3q+WHGRSIzxx/JklIUMUQL9V8VK9GPQ
+QZ1IT/yzzdE8Pet8jpvuQLJKeT6UbRjHn8xiFuD6CWPaQ44j8CAb70wPStxnMEr0
+RevEiPGlKbF3DFt40XsnLdqPDPXRkVVAejcnJMLo5XJQzpK03R16S3Gl9iM6zJU2
+XKwYsbYZNG7v7T9d2mIQynfYx3lPJEtENjuocwIDAQABAoIBAQCfyUnKxD2dCnle
+DScM+wM0338zMhYnKFpLPuom449GFOikI7MADCjkwteVD/WfV74/XbCm1MADGarw
+U8KgV51X/XYo+r9fk57vM42mpjwYplM2+Z1a3r5UvccVPp9E8qEnmPgN6HXhZ7pH
+8k252wRsC7WbMEpuL4KgHNl7M+ZjTcqlY6NchR7Sb/js3T5Nf0iWNKI1lGylSNgT
+96dJ06fnvqTSYy28K9pHi1Lg7OgSSLQs0Nz7s+rTsqcImDXoA3xYe8gp2xiBrdc9
+afBvbsBtkZjZoxA0mgUPH9iI15Sw8ReAaYjzkOWgkU5tAzwhw7bjC0JvPBUKS2kD
+60NpRCAxAoGBAOHioFbOOXzULNMFV5BFyiSngduhoL3Y0ygKrY7IhrCmdfZe24wU
+BABYIUJNMXhDH8yC9dLvAYVVDQMAQMFdGISkePeT9fhRR0Rhf4EihAd+qriAPJC3
+t7Faec33tVm78/KHa1OSimdffsjtbaUIbK4p3GY8WhE7gJqoxgO4or8bAoGBAMix
+j8PBHKvEMw0juQx5Y78pgBKaZikAuftIpiTdTYnfu8nCoMpG9jH4CJJHwKuzY9SF
+HGTrFRxyOtBFElwQJh/7XLRDUaQaMDzwCVv+MxVGYxsy/RwAWhzRRet30WHkXbJe
+jbIOhMnqviSKEF2jhP+IIZbAdhUzO2xkrdk8SVmJAoGAVoIfm/8Q3zC3Ff4Gwfco
+ao9IWV/2Gp8Oh1hHjdZYVxD5Pmintmb3/VXDLww3NPKoG//Pu3/TWkfvWsXfBu7r
+c+k1dsPQwNAH9jVMypz4aZJmOZDLITVrAV5AJdSHPJ2R2MFqJjCKFvroqHTduAWY
+8b6QbQsSB2V9ZD3c0BIHKh8CgYByYG+UmqwiYFDP/jnqGAx218n70C7E03sq8L5v
+aAhWuUGmvNsyLLsGw1rvMyFlOXl9ltcV1LxVV+yY4aSS/0kbFQBCY9NVeO9g61QK
+L5chWtoEmEyT9sdkgQgeKE0WQzX6/9Q1U/ztrnDrFhw5oYWctBKgfdNORcJqBf7m
+PWt4MQKBgQCbROT5FgmIgiiSyx0RgHnsSPeWzXGoTdmLivwopF8uw0FPcauwKKjH
+2Gd7v6nY16hXh5xXseIuYomkToHl7M66d6vAReUb3hzAH4v3PAA96thU6nmRLm0m
+DEDISWVYkURJedB6il0t9CPpoyq+Vtb0Z/jRo+zczdQMF10ZNmPgog==
+-----END RSA PRIVATE KEY-----
+private_key_type    rsa
+serial_number       24:a3:67:c7:47:d8:37:8a:b9:e9:0b:a7:a0:92:ba:48:9d:38:ce:2
+```
+
+Выполнено задание со *
+
+Реализовать доступ к vault через https
+
+По инструкции https://akjamie.github.io/post/2023-03-25-vault-on-k8s/
+
+```
+selcov@ubuntu:~/k8s/elcovstas_platform/kubernetes-vault$ kubectl port-forward vault-0 8200:8200
+
+selcov@ubuntu:~$ curl http://127.0.0.1:8200
+Client sent an HTTP request to an HTTPS server.
+
+selcov@ubuntu:~$ curl --insecure --header "X-Vault-Token:hvs.CAESIECltA3ma9c4OcZqVOdMB0e7gl3qM3rvatWbtSYmj7reGh4KHGh2cy4zbk82NDc0NEN2NXNMc1FMUk1EaG0wWEc"  https://127.0.0.1:8200/v1/otus/otus-ro/config
+{"request_id":"9e8b5019-3cd5-8f60-6a78-75f8d1ece175","lease_id":"","renewable":false,"lease_duration":2764800,"data":{"password":"asajkjkahs","username":"otus"},"wrap_info":null,"warnings":null,"auth":null}
+```
