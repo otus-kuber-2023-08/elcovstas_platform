@@ -883,7 +883,7 @@ Client sent an HTTP request to an HTTPS server.
 selcov@ubuntu:~$ curl --insecure --header "X-Vault-Token:hvs.CAESIECltA3ma9c4OcZqVOdMB0e7gl3qM3rvatWbtSYmj7reGh4KHGh2cy4zbk82NDc0NEN2NXNMc1FMUk1EaG0wWEc"  https://127.0.0.1:8200/v1/otus/otus-ro/config
 {"request_id":"9e8b5019-3cd5-8f60-6a78-75f8d1ece175","lease_id":"","renewable":false,"lease_duration":2764800,"data":{"password":"asajkjkahs","username":"otus"},"wrap_info":null,"warnings":null,"auth":null}
 ```
-# Домашяя работа 12. Развертывание системы хранения данных
+# Домашняя работа 12. Развертывание системы хранения данных
 
 1) Добавление CRD снапшотов
 2) Установка snapshot-controller
