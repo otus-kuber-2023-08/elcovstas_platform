@@ -883,3 +883,42 @@ Client sent an HTTP request to an HTTPS server.
 selcov@ubuntu:~$ curl --insecure --header "X-Vault-Token:hvs.CAESIECltA3ma9c4OcZqVOdMB0e7gl3qM3rvatWbtSYmj7reGh4KHGh2cy4zbk82NDc0NEN2NXNMc1FMUk1EaG0wWEc"  https://127.0.0.1:8200/v1/otus/otus-ro/config
 {"request_id":"9e8b5019-3cd5-8f60-6a78-75f8d1ece175","lease_id":"","renewable":false,"lease_duration":2764800,"data":{"password":"asajkjkahs","username":"otus"},"wrap_info":null,"warnings":null,"auth":null}
 ```
+# Домашняя работа 12. Развертывание системы хранения данных
+
+1) Добавление CRD снапшотов
+2) Установка snapshot-controller
+3) Установка CSI Host Path Driver
+4) Создание StorageClass, storage-pvc, storage-pod
+
+Результат:
+
+```
+root@knd-test-kub-m1:~/elcovstas_platform/kubernetes-storage# kubectl get pod storage-pod
+NAME          READY   STATUS    RESTARTS   AGE
+storage-pod   1/1     Running   0          133m
+root@knd-test-kub-m1:~/elcovstas_platform/kubernetes-storage# kubectl get pvc storage-pvc
+NAME          STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS      AGE
+storage-pvc   Bound    pvc-d1f41296-0f88-402c-8e8e-bd0ba863fc16   1Gi        RWO            csi-hostpath-sc   136m
+
+root@knd-test-kub-m1:~/elcovstas_platform/kubernetes-storage# kubectl exec storage-pod -it /bin/sh
+kubectl exec [POD] [COMMAND] is DEPRECATED and will be removed in a future version. Use kubectl exec [POD] -- [COMMAND] instead.
+/ #
+/ #
+/ # ls -l
+total 44
+drwxr-xr-x    2 root     root         12288 Dec  4 19:45 bin
+drwxr-xr-x    2 root     root          4096 Dec 14 13:15 data
+drwxr-xr-x    5 root     root           360 Dec 14 13:19 dev
+drwxr-xr-x    1 root     root          4096 Dec 14 13:19 etc
+drwxr-xr-x    2 nobody   nobody        4096 Dec  4 19:45 home
+drwxr-xr-x    2 root     root          4096 Dec  4 19:45 lib
+lrwxrwxrwx    1 root     root             3 Dec  4 19:45 lib64 -> lib
+dr-xr-xr-x  361 root     root             0 Dec 14 13:19 proc
+drwx------    1 root     root          4096 Dec 14 13:20 root
+dr-xr-xr-x   13 root     root             0 Dec 14 13:19 sys
+drwxrwxrwt    2 root     root          4096 Dec  4 19:45 tmp
+drwxr-xr-x    4 root     root          4096 Dec  4 19:45 usr
+drwxr-xr-x    1 root     root          4096 Dec 14 13:19 var
+```
+
+Папка data добавлена в pod
