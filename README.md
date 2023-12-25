@@ -922,3 +922,94 @@ drwxr-xr-x    1 root     root          4096 Dec 14 13:19 var
 ```
 
 Папка data добавлена в pod
+
+# Домашняя работа 13. ДЗ. Отладка и тестирование в Kubernetes
+
+1) Установка kubectl-debug
+
+Установку приложения выполнил с помощью скрипта kubernetes_debug_install.sh
+
+```
+PLUGIN_VERSION=0.1.1
+# linux x86_64
+curl -Lo kubectl-debug.tar.gz https://github.com/aylei/kubectl-debug/releases/download/v${PLUGIN_VERSION}/kubectl-debug_${PLUGIN_VERSION}_linux_amd64.tar.gz
+
+tar -zxvf kubectl-debug.tar.gz kubectl-debug
+sudo mv kubectl-debug /usr/local/bin/
+```
+
+Агента поставил через манифест
+
+```
+kubectl apply -f https://raw.githubusercontent.com/aylei/kubectl-debug/master/scripts/agent_daemonset.yml
+
+
+root@knd-test-kub-m1:~/elcovstas_platform/kubernetes-debug# kubectl get daemonset
+NAME          DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR   AGE
+debug-agent   3         3         3       3            3           <none>          81m
+rng           3         3         3       3            3           <none>          192d
+
+```
+
+2) Проверка kubectl-debug
+
+Проверил с помощью команды 
+
+```
+kubectl debug -it web --image=nicolaka/netshoot:latest --target=web
+
+ web  ~  ps aux
+PID   USER     TIME  COMMAND
+    1 root      0:00 nginx: master process nginx -g daemon off;
+   29 101       0:00 nginx: worker process
+   30 101       0:00 nginx: worker process
+   31 101       0:00 nginx: worker process
+   32 101       0:00 nginx: worker process
+  173 root      0:02 zsh
+  240 root      0:00 ps aux
+
+ web  ~  strace -p 1 -c
+strace: attach: ptrace(PTRACE_SEIZE, 1): Operation not permitted
+```
+
+К, сожалению, добавление securitycontent в pod не сработало.
+
+Если, использовать образ alpine и установить strace, то strace работает, но процесс в контейнере не нашего nginx.
+
+```
+root@knd-test-kub-m1:~/elcovstas_platform/kubernetes-debug# kubectl debug -it web --image=alpine target=web
+Defaulting debug container name to debugger-b4lpr.
+If you don't see a command prompt, try pressing enter.
+/ # ps afx
+PID   USER     TIME  COMMAND
+    1 root      0:00 /bin/sh
+    7 root      0:00 ps afx
+/ # apk add strace
+(1/7) Installing zstd-libs (1.5.5-r8)
+(2/7) Installing libelf (0.190-r1)
+(3/7) Installing libbz2 (1.0.8-r6)
+(4/7) Installing musl-fts (1.2.7-r6)
+(5/7) Installing xz-libs (5.4.5-r0)
+(6/7) Installing libdw (0.190-r1)
+(7/7) Installing strace (6.6-r0)
+Executing busybox-1.36.1-r15.trigger
+OK: 10 MiB in 22 packages
+/ # strace -p 1 -c
+strace: Process 1 attached
+^Cstrace: Process 1 detached
+```
+
+
+3) Установка iptables-tailes и netperf-operator
+
+Установить netperf-operator на кластере v1.25.9 не получилось, т.к. проект уже старый не поддерживается.
+
+```
+root@knd-test-kub-m1:~/elcovstas_platform/kubernetes-debug/kit# kubectl create -f crd.yaml
+error: resource mapping not found for name: "netperfs.app.example.com" namespace: "" from "crd.yaml": no matches for kind "CustomResourceDefinition" in version "apiextensions.k8s.io/v1beta1"
+ensure CRDs are installed first
+```
+
+kube-iptables-tailer тоже устаревший репотизорий. Вижу, что есть pull в 2022 году, про поддержку версии 1.19.10 https://github.com/box/kube-iptables-tailer/pull/37
+
+Устанавливать старую версию кластера, для этого дела не собираюсь. Прошу обновить ДЗ по этому уроку, для актуальных утилит в данное время.
