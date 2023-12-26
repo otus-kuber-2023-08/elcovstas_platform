@@ -1751,3 +1751,143 @@ worker-1   Ready    <none>          80m   v1.24.17   10.129.0.7    <none>       
 worker-2   Ready    <none>          80m   v1.24.17   10.129.0.16   <none>        Ubuntu 20.04.6 LTS   5.4.0-169-generic   containerd://1.6.26
 worker-3   Ready    <none>          80m   v1.24.17   10.129.0.19   <none>        Ubuntu 20.04.6 LTS   5.4.0-169-generic   containerd://1.6.26
 ```
+
+3) Установка кластера с помощью kubespray
+
+Скачал репотизорий kubespray, но при выполнении команды sudo pip install -r requirements.txt  столкнулся с ошибкой совместимости версий.
+
+```
+ERROR: Ignored the following yanked versions: 9.0.0
+ERROR: Ignored the following versions that require a different python version: 7.0.0 Requires-Python >=3.9; 7.0.0a1 Requires-Python >=3.9.0; 7.0.0a2 Requires-Python >=3.9; 7.0.0b1 Requires-Python >=3.9; 7.0.0rc1 Requires-Python >=3.9; 7.1.0 Requires-Python >=3.9; 7.2.0 Requires-Python >=3.9; 7.3.0 Requires-Python >=3.9; 7.4.0 Requires-Python >=3.9; 7.5.0 Requires-Python >=3.9; 7.6.0 Requires-Python >=3.9; 7.7.0 Requires-Python >=3.9; 8.0.0 Requires-Python >=3.9; 8.0.0a1 Requires-Python >=3.9; 8.0.0a2 Requires-Python >=3.9; 8.0.0a3 Requires-Python >=3.9; 8.0.0b1 Requires-Python >=3.9; 8.0.0rc1 Requires-Python >=3.9; 8.1.0 Requires-Python >=3.9; 8.2.0 Requires-Python >=3.9; 8.3.0 Requires-Python >=3.9; 8.4.0 Requires-Python >=3.9; 8.5.0 Requires-Python >=3.9; 8.6.0 Requires-Python >=3.9; 8.6.1 Requires-Python >=3.9; 8.7.0 Requires-Python >=3.9; 9.0.1 Requires-Python >=3.10; 9.1.0 Requires-Python >=3.10
+ERROR: Could not find a version that satisfies the requirement ansible==8.5.0 (from versions: 1.0, 1.1, 1.2, 1.2.1, 1.2.2, 1.2.3, 1.3.0, 1.3.1, 1.3.2, 1.3.3, 1.3.4, 1.4, 1.4.1, 1.4.2, 1.4.3, 1.4.4, 1.4.5, 1.5, 1.5.1, 1.5.2, 1.5.3, 1.5.4, 1.5.5, 1.6, 1.6.1, 1.6.2, 1.6.3, 1.6.4, 1.6.5, 1.6.6, 1.6.7, 1.6.8, 1.6.9, 1.6.10, 1.7, 1.7.1, 1.7.2, 1.8, 1.8.1, 1.8.2, 1.8.3, 1.8.4, 1.9.0.1, 1.9.1, 1.9.2, 1.9.3, 1.9.4, 1.9.5, 1.9.6, 2.0.0.0, 2.0.0.1, 2.0.0.2, 2.0.1.0, 2.0.2.0, 2.1.0.0, 2.1.1.0, 2.1.2.0, 2.1.3.0, 2.1.4.0, 2.1.5.0, 2.1.6.0, 2.2.0.0, 2.2.1.0, 2.2.2.0, 2.2.3.0, 2.3.0.0, 2.3.1.0, 2.3.2.0, 2.3.3.0, 2.4.0.0, 2.4.1.0, 2.4.2.0, 2.4.3.0, 2.4.4.0, 2.4.5.0, 2.4.6.0, 2.5.0a1, 2.5.0b1, 2.5.0b2, 2.5.0rc1, 2.5.0rc2, 2.5.0rc3, 2.5.0, 2.5.1, 2.5.2, 2.5.3, 2.5.4, 2.5.5, 2.5.6, 2.5.7, 2.5.8, 2.5.9, 2.5.10, 2.5.11, 2.5.12, 2.5.13, 2.5.14, 2.5.15, 2.6.0a1, 2.6.0a2, 2.6.0rc1, 2.6.0rc2, 2.6.0rc3, 2.6.0rc4, 2.6.0rc5, 2.6.0, 2.6.1, 2.6.2, 2.6.3, 2.6.4, 2.6.5, 2.6.6, 2.6.7, 2.6.8, 2.6.9, 2.6.10, 2.6.11, 2.6.12, 2.6.13, 2.6.14, 2.6.15, 2.6.16, 2.6.17, 2.6.18, 2.6.19, 2.6.20, 2.7.0.dev0, 2.7.0a1, 2.7.0b1, 2.7.0rc1, 2.7.0rc2, 2.7.0rc3, 2.7.0rc4, 2.7.0, 2.7.1, 2.7.2, 2.7.3, 2.7.4, 2.7.5, 2.7.6, 2.7.7, 2.7.8, 2.7.9, 2.7.10, 2.7.11, 2.7.12, 2.7.13, 2.7.14, 2.7.15, 2.7.16, 2.7.17, 2.7.18, 2.8.0a1, 2.8.0b1, 2.8.0rc1, 2.8.0rc2, 2.8.0rc3, 2.8.0, 2.8.1, 2.8.2, 2.8.3, 2.8.4, 2.8.5, 2.8.6, 2.8.7, 2.8.8, 2.8.9, 2.8.10, 2.8.11, 2.8.12, 2.8.13, 2.8.14, 2.8.15, 2.8.16rc1, 2.8.16, 2.8.17rc1, 2.8.17, 2.8.18rc1, 2.8.18, 2.8.19rc1, 2.8.19, 2.8.20rc1, 2.8.20, 2.9.0b1, 2.9.0rc1, 2.9.0rc2, 2.9.0rc3, 2.9.0rc4, 2.9.0rc5, 2.9.0, 2.9.1, 2.9.2, 2.9.3, 2.9.4, 2.9.5, 2.9.6, 2.9.7, 2.9.8, 2.9.9, 2.9.10, 2.9.11, 2.9.12, 2.9.13, 2.9.14rc1, 2.9.14, 2.9.15rc1, 2.9.15, 2.9.16rc1, 2.9.16, 2.9.17rc1, 2.9.17, 2.9.18rc1, 2.9.18, 2.9.19rc1, 2.9.19, 2.9.20rc1, 2.9.20, 2.9.21rc1, 2.9.21, 2.9.22rc1, 2.9.22, 2.9.23rc1, 2.9.23, 2.9.24rc1, 2.9.24, 2.9.25rc1, 2.9.25, 2.9.26rc1, 2.9.26, 2.9.27rc1, 2.9.27, 2.10.0a1, 2.10.0a2, 2.10.0a3, 2.10.0a4, 2.10.0a5, 2.10.0a6, 2.10.0a7, 2.10.0a8, 2.10.0a9, 2.10.0b1, 2.10.0b2, 2.10.0rc1, 2.10.0, 2.10.1, 2.10.2, 2.10.3, 2.10.4, 2.10.5, 2.10.6, 2.10.7, 3.0.0b1, 3.0.0rc1, 3.0.0, 3.1.0, 3.2.0, 3.3.0, 3.4.0, 4.0.0a1, 4.0.0a2, 4.0.0a3, 4.0.0a4, 4.0.0b1, 4.0.0b2, 4.0.0rc1, 4.0.0, 4.1.0, 4.2.0, 4.3.0, 4.4.0, 4.5.0, 4.6.0, 4.7.0, 4.8.0, 4.9.0, 4.10.0, 5.0.0a1, 5.0.0a2, 5.0.0a3, 5.0.0b1, 5.0.0b2, 5.0.0rc1, 5.0.1, 5.1.0, 5.2.0, 5.3.0, 5.4.0, 5.5.0, 5.6.0, 5.7.0, 5.7.1, 5.8.0, 5.9.0, 5.10.0, 6.0.0a1, 6.0.0a2, 6.0.0a3, 6.0.0b1, 6.0.0b2, 6.0.0rc1, 6.0.0, 6.1.0, 6.2.0, 6.3.0, 6.4.0, 6.5.0, 6.6.0, 6.7.0, 9.0.0a1, 9.0.0a2, 9.0.0a3, 9.0.0b1, 9.0.0rc1)
+ERROR: No matching distribution found for ansible==8.5.0
+```
+
+Будем использовать docker контейнер для этого дела
+
+```
+git checkout v2.23.1
+docker pull quay.io/kubespray/kubespray:v2.23.1
+docker run --rm -it --mount type=bind,source="$(pwd)"/inventory/sample,dst=/inventory \
+  --mount type=bind,source="${HOME}"/.ssh/id_rsa,dst=/root/.ssh/id_rsa \
+  quay.io/kubespray/kubespray:v2.23.1 bash
+# Inside the container you may now run the kubespray playbooks:
+ansible-playbook -i /inventory/inventory.ini --private-key /root/.ssh/id_rsa cluster.yml
+```
+
+Пишем конфиг inventory
+
+```
+root@bacbb2bef9bd:/kubespray# cat inventory/sample/inventory.ini
+# ## Configure 'ip' variable to bind kubernetes services on a
+# ## different ip than the default iface
+# ## We should set etcd_member_name for etcd cluster. The node that is not a etcd member do not need to set the value, or can set the empty string value.
+[all]
+node1 ansible_host=158.160.23.111 etcd_member_name=etcd1
+node2 ansible_host=158.160.13.18
+node3 ansible_host=51.250.97.192
+node4 ansible_host=62.84.120.191
+# node5 ansible_host=95.54.0.16  # ip=10.3.0.5 etcd_member_name=etcd5
+# node6 ansible_host=95.54.0.17  # ip=10.3.0.6 etcd_member_name=etcd6
+
+# ## configure a bastion host if your nodes are not directly reachable
+# [bastion]
+# bastion ansible_host=x.x.x.x ansible_user=some_user
+
+[kube_control_plane]
+node1
+# node2
+# node3
+
+[etcd]
+node1
+# node2
+# node3
+
+[kube_node]
+node2
+node3
+node4
+# node5
+# node6
+
+[calico_rr]
+
+[k8s_cluster:children]
+kube_control_plane
+kube_node
+calico_rr
+```
+
+Запускаем роль
+
+```
+ansible-playbook -i inventory/sample/inventory.ini --become --become-user=root --user=admin --private-key /root/.ssh/id_rsa cluster.yml
+```
+
+
+Завершение работы роли
+
+```
+PLAY RECAP **************************************************************************************************************************************************************************************************
+localhost                  : ok=3    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+node1                      : ok=751  changed=153  unreachable=0    failed=0    skipped=1283 rescued=0    ignored=8
+node2                      : ok=511  changed=95   unreachable=0    failed=0    skipped=783  rescued=0    ignored=1
+node3                      : ok=511  changed=95   unreachable=0    failed=0    skipped=782  rescued=0    ignored=1
+node4                      : ok=511  changed=95   unreachable=0    failed=0    skipped=782  rescued=0    ignored=1
+
+Tuesday 26 December 2023  15:54:27 +0000 (0:00:00.234)       0:15:43.928 ******
+===============================================================================
+download : Download_file | Download item ------------------------------------------------------------------------------------------------------------------------------------------------------------ 72.47s
+download : Download_file | Download item ------------------------------------------------------------------------------------------------------------------------------------------------------------ 44.22s
+kubernetes/kubeadm : Join to cluster ---------------------------------------------------------------------------------------------------------------------------------------------------------------- 25.30s
+kubernetes/preinstall : Install packages requirements ----------------------------------------------------------------------------------------------------------------------------------------------- 24.10s
+kubernetes/preinstall : Preinstall | wait for the apiserver to be running --------------------------------------------------------------------------------------------------------------------------- 23.98s
+download : Download_file | Download item ------------------------------------------------------------------------------------------------------------------------------------------------------------ 20.63s
+download : Download_container | Download image if required ------------------------------------------------------------------------------------------------------------------------------------------ 13.47s
+container-engine/crictl : Download_file | Download item --------------------------------------------------------------------------------------------------------------------------------------------- 12.42s
+container-engine/containerd : Download_file | Download item ----------------------------------------------------------------------------------------------------------------------------------------- 12.13s
+container-engine/nerdctl : Download_file | Download item -------------------------------------------------------------------------------------------------------------------------------------------- 12.07s
+container-engine/runc : Download_file | Download item ----------------------------------------------------------------------------------------------------------------------------------------------- 11.65s
+kubernetes/control-plane : Kubeadm | Initialize first master ---------------------------------------------------------------------------------------------------------------------------------------- 11.04s
+download : Download_container | Download image if required ------------------------------------------------------------------------------------------------------------------------------------------ 10.85s
+container-engine/crictl : Extract_file | Unpacking archive ------------------------------------------------------------------------------------------------------------------------------------------- 9.02s
+etcdctl_etcdutl : Download_file | Download item ------------------------------------------------------------------------------------------------------------------------------------------------------ 8.90s
+container-engine/nerdctl : Download_file | Validate mirrors ------------------------------------------------------------------------------------------------------------------------------------------ 8.63s
+container-engine/crictl : Download_file | Validate mirrors ------------------------------------------------------------------------------------------------------------------------------------------- 8.61s
+kubernetes-apps/ansible : Kubernetes Apps | Start Resources ------------------------------------------------------------------------------------------------------------------------------------------ 8.47s
+container-engine/containerd : Download_file | Validate mirrors --------------------------------------------------------------------------------------------------------------------------------------- 8.38s
+container-engine/nerdctl : Extract_file | Unpacking archive ------------------------------------------------------------------------------------------------------------------------------------------ 8.36s
+```
+
+Вывод команды kubectl get nodes
+
+```
+root@node1:~# kubectl get nodes
+NAME    STATUS   ROLES           AGE     VERSION
+node1   Ready    control-plane   10m     v1.27.7
+node2   Ready    <none>          9m39s   v1.27.7
+node3   Ready    <none>          9m38s   v1.27.7
+node4   Ready    <none>          9m37s   v1.27.7
+```
+
+4) * Выполните установку кластера с 3 master-нодами и 2 worker-нодами, можно использовать kubeadm или любой другой способ установки kubernetes.
+
+Устанавливал с помощью rke v1.
+
+
+Вывод команды kubectl get nodes
+
+```
+root@knd-test-kub-m1:~# kubectl get nodes
+NAME                      STATUS   ROLES               AGE    VERSION
+knd-test-kub-m1.fors.ru   Ready    controlplane,etcd   204d   v1.25.9
+knd-test-kub-m2.fors.ru   Ready    controlplane,etcd   204d   v1.25.9
+knd-test-kub-m3.fors.ru   Ready    controlplane,etcd   204d   v1.25.9
+knd-test-kub-s1.fors.ru   Ready    worker              204d   v1.25.9
+knd-test-kub-s2.fors.ru   Ready    worker              204d   v1.25.9
+knd-test-kub-s3.fors.ru   Ready    worker              204d   v1.25.9
+```
+
+Инструкция по ссылке https://itisgood.ru/2020/01/29/ustanovka-proizvodstvennogo-klastera-kubernetes-s-rancher-rke/
+
